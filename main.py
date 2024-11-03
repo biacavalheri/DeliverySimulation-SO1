@@ -1,3 +1,7 @@
+# Beatriz de Oliveira Cavalheri
+# Larissa Rodrigues Ferrari
+# Murilo Augusto Venturato
+
 import threading
 import random
 import time
