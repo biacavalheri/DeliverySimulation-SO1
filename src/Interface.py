@@ -68,7 +68,11 @@ class Interface:
                 # Adicionar o log no widget de texto
                 self.log_text.insert(tk.END, log_message + "\n")
                 self.log_text.yview(tk.END)  # Scroll para o final do log
-
+            elif event_type == "Fim":
+                message = data
+                self.log_text.insert(tk.END, message)
+                self.log_text.yview(tk.END)  # Scroll para o final do log
+                print(message)
         # Continuar atualizando a interface
         self.root.after(100, self.update_interface)
 
