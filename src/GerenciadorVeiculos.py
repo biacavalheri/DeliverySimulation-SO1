@@ -14,14 +14,51 @@ class GerenciadorVeiculos:
 
     def gerenciar_veiculo(self, id_veiculo):
         while not self.sistema.finalizado:
-            posicao_atual = self.sistema.veiculos_pos[id_veiculo]
-            time.sleep(random.uniform(0.5, 10))
+            posicao_atual = self.sistema.veiculos_status[id_veiculo]["posicao"]
+            proximo_ponto = (posicao_atual + 1) % self.sistema.s
 
-            proximo_ponto = (posicao_atual + 1) % self.sistema.s            
-
-            self.sistema.gerenciar_ponto(
-                proximo_ponto, id_veiculo)
-
+            # Atualiza o status para "Em Viagem"
+            self.sistema.veiculos_status[id_veiculo].update({"status": "Em Viagem"})
             self.sistema.update_queue.put(
-                ("Movimento", (id_veiculo, proximo_ponto)))
-            self.sistema.veiculos_pos[id_veiculo] = proximo_ponto
+                ("Status Atualizado", {"id_veiculo": id_veiculo, "status": "Em Viagem"})
+            )
+
+            # Simulação da viagem
+            tempo_total_viagem = random.uniform(3, 10)  # Tempo total da viagem (segundos)
+            intervalos = 20  # Número de passos da viagem
+            tempo_por_intervalo = tempo_total_viagem / intervalos
+
+            spacing = 800 // self.sistema.s
+            x_inicio = spacing * posicao_atual + spacing // 2
+            x_fim = spacing * proximo_ponto + spacing // 2
+            y = 150  # Mantém o eixo Y fixo
+
+            for i in range(1, intervalos + 1):
+                # Interpolação linear
+                x_atual = x_inicio + (x_fim - x_inicio) * (i / intervalos)
+
+                # Atualiza a posição do veículo na interface
+                self.sistema.update_queue.put(
+                    ("Movimento Parcial", {"id_veiculo": id_veiculo, "x": x_atual, "y": y})
+                )
+                time.sleep(tempo_por_intervalo)  # Intervalo de tempo entre cada passo
+
+            # Ao final da viagem, atualiza a posição final
+            self.sistema.veiculos_status[id_veiculo].update({
+                "posicao": proximo_ponto,
+                "status": "Aguardando"
+            })
+            self.sistema.update_queue.put(
+                ("Movimento", (id_veiculo, proximo_ponto))
+            )
+
+            # Acessa o próximo ponto
+            self.sistema.gerenciar_ponto(proximo_ponto, id_veiculo)
+
+            # Marca como parado
+            self.sistema.veiculos_status[id_veiculo].update({"status": "Parado"})
+            self.sistema.update_queue.put(
+                ("Status Atualizado", {"id_veiculo": id_veiculo, "status": "Parado"})
+            )
+           
+
