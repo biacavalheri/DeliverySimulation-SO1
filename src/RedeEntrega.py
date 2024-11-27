@@ -1,10 +1,12 @@
+import os
+from datetime import datetime
 import threading
 import random
 import time
 from .GerenciadorEncomendas import GerenciadorEncomendas
 from .GerenciadorVeiculos import GerenciadorVeiculos
-import os
 
+horario_atual = datetime.now().strftime("%H:%M:%S")
 
 class RedeEntrega:
     def __init__(self, s, c, p, a, update_queue):
@@ -44,6 +46,7 @@ class RedeEntrega:
         for i in range(self.p):
             origem = random.randint(0, self.s - 1)
             destino = random.randint(0, self.s - 1)
+            
             while destino == origem:
                 destino = random.randint(0, self.s - 1)
             t = threading.Thread(
@@ -66,16 +69,9 @@ class RedeEntrega:
                 if self.enc_entregues >= self.p:
                     self.finalizado = True
                     self.update_queue.put(
-                        ("Simulação", "Simulação finalizada!"))
+                        ("Fim", "Simulação finalizada!"))
                     break
             time.sleep(0.1)
-
-    def buscar_proximo_ponto(self, ponto_atual):
-        for i in range(1, self.s):
-            proximo_ponto = (ponto_atual + i) % self.s
-            if proximo_ponto not in self.veiculos_pos:
-                return proximo_ponto
-        return -1
 
     def gerenciar_ponto(self, proximo_ponto, id_veiculo, posicao_atual):
         with self.pontos[proximo_ponto]:
@@ -106,16 +102,11 @@ class RedeEntrega:
                     ("Fila Atualizada", (proximo_ponto, len(self.filas[proximo_ponto]))))
 
     def salvar_rastro_encomenda(self, id_enc, origem, destino, hora_chegada, hora_carregamento, hora_descarregamento):
-        # Verifica e cria a pasta 'logs' se não existir
-        pasta_logs = "logs"
-        if not os.path.exists(pasta_logs):
-            os.makedirs(pasta_logs)
-            print(f"Pasta '{pasta_logs}' criada.")
+        nome_pasta = f"logs_{horario_atual}"
+        os.makedirs(nome_pasta, exist_ok=True)
 
-        # Define o caminho completo do arquivo
-        nome_arquivo = os.path.join(pasta_logs, f"rastro_encomenda_{id_enc}.txt")
+        nome_arquivo = f"{nome_pasta}/rastro_encomenda_{id_enc}.txt"
 
-        # Salva o rastro da encomenda no arquivo
         with open(nome_arquivo, "w") as file:
             file.write(f"ID da Encomenda: {id_enc}\n")
             file.write(f"Origem: {origem}\n")
