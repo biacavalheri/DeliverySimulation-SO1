@@ -5,6 +5,7 @@ class GerenciadorEncomendas:
     def __init__(self, sistema):
         self.sistema = sistema
 
+    # Gerencia uma encomenda específica.Cada thread gerencia uma única encomenda que: registra sua chegada ao ponto de origem, é adicionada à fila do ponto de origem e aguarda o carregamento por um veículo.
     def gerenciar_encomenda(self, id_enc, origem, destino):
         encomenda = Encomenda(id_enc, origem, destino)
         encomenda.registrar_chegada()
