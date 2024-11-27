@@ -1,6 +1,17 @@
 # DeliverySimulation-SO1
 
+**Disciplina**: Sistemas Operacionais I  
+**Professor**: Prof. Dr. Caetano Mazzoni Ranieri  
+**Instituição**: Universidade Estadual Paulista (UNESP)  
+**Departamento**: Estatística, Matemática Aplicada e Computação
+
+---
+
+## Descrição do Projeto
+
 Este projeto simula o comportamento de uma rede de entregas onde veículos transportam encomendas de pontos de redistribuição até seus destinos. A aplicação foi desenvolvida em Python utilizando conceitos de programação concorrente, como threads, semáforos e variáveis de controle.
+
+---
 
 ## Funcionalidades
 
@@ -8,6 +19,8 @@ Este projeto simula o comportamento de uma rede de entregas onde veículos trans
 - **C** veículos responsáveis pelo transporte das encomendas.
 - **P** encomendas a serem entregues.
 - Cada veículo possui **A** espaços de carga para acomodar as encomendas.
+
+---
 
 ## Como Funciona
 
@@ -25,8 +38,101 @@ Este projeto simula o comportamento de uma rede de entregas onde veículos trans
 - Ao chegar a um ponto de origem, a encomenda é colocada na fila de espera do ponto e aguarda para ser carregada por um veículo.
 - O rastro de cada encomenda é registrado em um arquivo, contendo horários de chegada, carregamento e descarregamento.
 
+---
+
 ## Dependências
 - Python 3.x
+- Bibliotecas utilizadas:
+    -   `tkinter` (para interface gráfica).
+
+---
+
+## Como Executar
+
+1. Clone este repositório:
+
+    ```bash
+    git clone <URL_DO_REPOSITORIO>
+    cd <NOME_DO_REPOSITORIO>
+    ```
+
+2. Execute o programa principal:
+
+    ```bash
+    python main.py
+    ```
+
+3. Insira os parâmetros solicitados:
+
+    - **S**: Número de pontos de redistribuição.
+    - **C**: Número de veículos.
+    - **P**: Número de encomendas.
+    - **A**: Número de espaços de carga por veículo.
+
+4. A interface gráfica será aberta, e os arquivos de logs serão gerados no diretório `logs`.
+
+---
+
+## Argumentos de Entrada
+
+O programa solicita os seguintes parâmetros de entrada:
+
+| Parâmetro | Descrição                               |
+| --------- | --------------------------------------- |
+| **S**     | Número de pontos de redistribuição.     |
+| **C**     | Número de veículos disponíveis.         |
+| **P**     | Número total de encomendas.             |
+| **A**     | Número de espaços de carga por veículo. |
+
+### Exemplo de Entrada
+
+```
+Digite o número de pontos de redistribuição (S): 5
+Digite o número de veículos (C): 3
+Digite o número de encomendas (P): 10
+Digite o número de espaços de carga em cada veículo (A): 2
+```
+
+---
+
+## Saídas
+
+1. **Interface gráfica**:
+
+    - Exibe os pontos de redistribuição, veículos e status das filas em tempo real.
+
+2. **Logs de rastreamento**:
+    - Diretório `logs/` contendo um arquivo para cada encomenda.
+    - Exemplo de arquivo de log:
+        ```
+        logs/rastro_encomenda_0.txt
+        ```
+        **Conteúdo do log**:
+        ```
+        ID da Encomenda: 0
+        Origem: 2
+        Destino: 4
+        Hora de Chegada na Origem: 1698439200.123456
+        Hora de Carregamento: 1698439205.654321
+        Hora de Descarregamento: 1698439210.789012
+        ```
+
+---
+
+## Estrutura do Projeto
+
+```
+.
+├── main.py               # Ponto de entrada da aplicação
+├── src/
+│   ├── Interface.py      # Interface gráfica (Tkinter)
+│   ├── RedeEntrega.py    # Gerenciamento central do sistema
+│   ├── GerenciadorEncomendas.py  # Controle das encomendas
+│   ├── GerenciadorVeiculos.py    # Controle dos veículos
+└── logs/                 # Diretório onde os logs são salvos
+```
+
+---
 
 ## Estrutura do Código
 
@@ -59,3 +165,12 @@ A estrutura do código é organizada em classes que representam os diferentes el
   - Gerenciar o ciclo completo da simulação, controlando o tempo de execução e o rastreamento das encomendas.
 
 Cada componente da simulação é independente, mas trabalha em conjunto para criar uma rede de entregas eficiente e realista, utilizando conceitos de concorrência para simular o transporte e a entrega das encomendas.
+
+---
+
+## Desenvolvedores
+
+-   Beatriz Cavalheri
+-   Larissa Rodrigues Ferrari
+-   Murilo Augusto Venturato
+
