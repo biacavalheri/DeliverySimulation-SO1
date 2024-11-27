@@ -18,8 +18,11 @@ def main():
         else:
             break
 
+    # Guarda os eventos para a interface
     update_queue = Queue()
+    # Aplicação
     rede_entrega = RedeEntrega(s, c, p, a, update_queue)
+    # Inicia as threads para o sistema dar inicio
     threading.Thread(target=rede_entrega.iniciar_threads).start()
 
     # Interface gráfica
@@ -28,9 +31,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
-    
-    
-# veiculo não verificava se tinha encomenda na fila
-# a capacidade do veiculo não influenciava no código 
-# dentro do ponto de redistribuição não estava sendo usado um semáforo

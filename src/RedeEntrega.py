@@ -5,6 +5,7 @@ from .GerenciadorEncomendas import GerenciadorEncomendas
 from .GerenciadorVeiculos import GerenciadorVeiculos
 import os
 from datetime import datetime
+from threading import Semaphore
 
 
 class RedeEntrega:
@@ -13,20 +14,27 @@ class RedeEntrega:
         self.c = c  # Veículos
         self.p = p  # Encomendas
         self.a = a  # Espaços por veículo
-        self.update_queue = update_queue
+        self.update_queue = update_queue # Fila de eventos para a interface
 
-        self.pontos = [threading.Semaphore(1) for _ in range(s)]
-        self.filas = [[] for _ in range(s)]
-        self.veiculos_pos = [random.randint(0, s - 1) for _ in range(c)]
-        self.veiculos_carga = [[] for _ in range(c)]
-        self.lock = threading.Lock()
-        self.enc_entregues = 0
-        self.finalizado = False
+        self.pontos = [Semaphore(1) for _ in range(s)] # Pontos de distribuição/entrega
+        self.filas = [[] for _ in range(s)] # Filas dos pontos
+        self.filas_semaforo = [Semaphore(1) for _ in range(s)] # Cada fila é um semafaro (preciosismo)
 
-        self.gerenciador_veiculos = GerenciadorVeiculos(self)
+        self.veiculos_pos = [random.randint(0, s - 1) for _ in range(c)] # Posição Aleatoria dos carrinhos entre 0 e o máximo de pontos de entrega
+        self.veiculos_status = [{"posicao": pos, "status": "Parado"} for pos in self.veiculos_pos] # Status iniciais dos carrinhos
+        self.veiculos_carga = [[] for _ in range(c)] # fila de carga de cada carrinho
+
+        self.lock = threading.Lock() # TODO: Validar depois
+
+        self.enc_entregues = 0 # Guarda o numero de entregas feitas
+        self.finalizado = False # Guarda se o sistema já finalizou
+
+        # Gerenciadores
+        self.gerenciador_veiculos = GerenciadorVeiculos(self) 
         self.gerenciador_encomendas = GerenciadorEncomendas(self)
 
-    def iniciar_threads(self):
+    # A função principal
+    def iniciar_threads(self): 
         threads = []
 
         # Inicializa os veículos e garante que eles começam em pontos diferentes
@@ -74,29 +82,47 @@ class RedeEntrega:
     def gerenciar_ponto(self, proximo_ponto, id_veiculo):
         with self.pontos[proximo_ponto]:
             nova_carga = []
-            for encomenda in self.veiculos_carga[id_veiculo]:
-                if encomenda.destino == proximo_ponto:
-                    encomenda.registrar_entrega()
-                    self.salvar_rastro_encomenda(encomenda)
-                    with self.lock:
-                        self.enc_entregues += 1
-                    self.update_queue.put(
-                        ("Log", f"Veículo {id_veiculo} entregou encomenda {encomenda.id_enc} no ponto {encomenda.destino}"))
-                    self.update_queue.put(
-                        ("Entrega", (id_veiculo, encomenda.id_enc, encomenda.destino)))
-                else:
-                    nova_carga.append(encomenda)
-            self.veiculos_carga[id_veiculo] = nova_carga
 
-            while len(self.veiculos_carga[id_veiculo]) < self.a and self.filas[proximo_ponto]:
-                encomenda = self.filas[proximo_ponto].pop(0)
-                encomenda.registrar_carregamento()
-                self.veiculos_carga[id_veiculo].append(encomenda)
-                self.update_queue.put(
-                    ("Log", f"Veículo {id_veiculo} carregou encomenda {encomenda.id_enc} no ponto {proximo_ponto}"))
-                self.update_queue.put(
-                    ("Fila Atualizada", (proximo_ponto, len(self.filas[proximo_ponto]))))
+            with self.filas_semaforo[proximo_ponto]:
+                for encomenda in self.veiculos_carga[id_veiculo]:
+                    if encomenda.destino == proximo_ponto:
+                        encomenda.registrar_entrega()
+                        self.salvar_rastro_encomenda(encomenda)
+                        with self.lock:
+                            self.enc_entregues += 1
+                        
+                        self.update_queue.put(
+                            ("Status Atualizado", {"id_veiculo": id_veiculo, "status": "Descarregando..."})
+                        )
 
+                        time.sleep(random.uniform(1, 5)) # Tempo entrega
+
+                        self.update_queue.put(
+                            ("Log", f"Veículo {id_veiculo} entregou encomenda {encomenda.id_enc} no ponto {encomenda.destino}"))
+                        self.update_queue.put(
+                            ("Entrega", (id_veiculo, encomenda.id_enc, encomenda.destino)))
+                    else:
+                        nova_carga.append(encomenda)
+
+                self.veiculos_carga[id_veiculo] = nova_carga
+
+                while len(self.veiculos_carga[id_veiculo]) < self.a and self.filas[proximo_ponto]:
+                    encomenda = self.filas[proximo_ponto].pop(
+                        0)  # Retirar encomenda da fila
+                    encomenda.registrar_carregamento()
+                    self.veiculos_carga[id_veiculo].append(encomenda)
+                    
+                    self.update_queue.put(
+                        ("Status Atualizado", {"id_veiculo": id_veiculo, "status": "Carregando..."})
+                    )
+
+                    time.sleep(random.uniform(5, 10)) # Tempo carregamento
+
+                    self.update_queue.put(
+                        ("Log", f"Veículo {id_veiculo} carregou encomenda {encomenda.id_enc} no ponto {proximo_ponto}"))
+                    self.update_queue.put(
+                        ("Fila Atualizada", (proximo_ponto, len(self.filas[proximo_ponto]))))
+                    
 
     def salvar_rastro_encomenda(self, encomenda):
         pasta_logs = "logs"
@@ -108,8 +134,10 @@ class RedeEntrega:
 
         log_dia = agora.strftime("%Y_%m_%d_%H_%M_%S")
 
-        nome_arquivo = os.path.join(pasta_logs, f"rastro_encomenda_{encomenda.id_enc}_{log_dia}.txt")
+        nome_arquivo = os.path.join(
+            pasta_logs, f"rastro_encomenda_{encomenda.id_enc}_{log_dia}.txt")
 
         with open(nome_arquivo, "w") as file:
             file.write(str(encomenda))
-        print(f"Rastro da encomenda {encomenda.id_enc} salvo no arquivo {nome_arquivo}")
+        print(
+            f"Rastro da encomenda {encomenda.id_enc} salvo no arquivo {nome_arquivo}")
