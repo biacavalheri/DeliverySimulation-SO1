@@ -1,12 +1,11 @@
-import os
-from datetime import datetime
 import threading
 import random
 import time
 from .GerenciadorEncomendas import GerenciadorEncomendas
 from .GerenciadorVeiculos import GerenciadorVeiculos
+import os
+from datetime import datetime
 
-horario_atual = datetime.now().strftime("%H:%M:%S")
 
 class RedeEntrega:
     def __init__(self, s, c, p, a, update_queue):
@@ -46,7 +45,6 @@ class RedeEntrega:
         for i in range(self.p):
             origem = random.randint(0, self.s - 1)
             destino = random.randint(0, self.s - 1)
-            
             while destino == origem:
                 destino = random.randint(0, self.s - 1)
             t = threading.Thread(
@@ -73,45 +71,45 @@ class RedeEntrega:
                     break
             time.sleep(0.1)
 
-    def gerenciar_ponto(self, proximo_ponto, id_veiculo, posicao_atual):
+    def gerenciar_ponto(self, proximo_ponto, id_veiculo):
         with self.pontos[proximo_ponto]:
             nova_carga = []
-            for id_enc, destino in self.veiculos_carga[id_veiculo]:
-                if destino == proximo_ponto:
-                    hora_chegada = time.time()
-                    hora_carregamento = time.time()
-                    hora_descarregamento = time.time()
-                    self.salvar_rastro_encomenda(
-                        id_enc, posicao_atual, destino, hora_chegada, hora_carregamento, hora_descarregamento)
+            for encomenda in self.veiculos_carga[id_veiculo]:
+                if encomenda.destino == proximo_ponto:
+                    encomenda.registrar_entrega()
+                    self.salvar_rastro_encomenda(encomenda)
                     with self.lock:
                         self.enc_entregues += 1
                     self.update_queue.put(
-                        ("Log", f"Veículo {id_veiculo} entregou encomenda {id_enc} no ponto {destino}"))
+                        ("Log", f"Veículo {id_veiculo} entregou encomenda {encomenda.id_enc} no ponto {encomenda.destino}"))
                     self.update_queue.put(
-                        ("Entrega", (id_veiculo, id_enc, destino)))
+                        ("Entrega", (id_veiculo, encomenda.id_enc, encomenda.destino)))
                 else:
-                    nova_carga.append((id_enc, destino))
+                    nova_carga.append(encomenda)
             self.veiculos_carga[id_veiculo] = nova_carga
 
             while len(self.veiculos_carga[id_veiculo]) < self.a and self.filas[proximo_ponto]:
                 encomenda = self.filas[proximo_ponto].pop(0)
+                encomenda.registrar_carregamento()
                 self.veiculos_carga[id_veiculo].append(encomenda)
                 self.update_queue.put(
-                    ("Log", f"Veículo {id_veiculo} carregou encomenda {encomenda[0]} no ponto {proximo_ponto}"))
+                    ("Log", f"Veículo {id_veiculo} carregou encomenda {encomenda.id_enc} no ponto {proximo_ponto}"))
                 self.update_queue.put(
                     ("Fila Atualizada", (proximo_ponto, len(self.filas[proximo_ponto]))))
 
-    def salvar_rastro_encomenda(self, id_enc, origem, destino, hora_chegada, hora_carregamento, hora_descarregamento):
-        nome_pasta = f"logs_{horario_atual}"
-        os.makedirs(nome_pasta, exist_ok=True)
 
-        nome_arquivo = f"{nome_pasta}/rastro_encomenda_{id_enc}.txt"
+    def salvar_rastro_encomenda(self, encomenda):
+        pasta_logs = "logs"
+        if not os.path.exists(pasta_logs):
+            os.makedirs(pasta_logs)
+            print(f"Pasta '{pasta_logs}' criada.")
+
+        agora = datetime.now()
+
+        log_dia = agora.strftime("%Y_%m_%d_%H_%M_%S")
+
+        nome_arquivo = os.path.join(pasta_logs, f"rastro_encomenda_{encomenda.id_enc}_{log_dia}.txt")
 
         with open(nome_arquivo, "w") as file:
-            file.write(f"ID da Encomenda: {id_enc}\n")
-            file.write(f"Origem: {origem}\n")
-            file.write(f"Destino: {destino}\n")
-            file.write(f"Hora de Chegada na Origem: {hora_chegada}\n")
-            file.write(f"Hora de Carregamento: {hora_carregamento}\n")
-            file.write(f"Hora de Descarregamento: {hora_descarregamento}\n")
-        print(f"Rastro da encomenda {id_enc} salvo no arquivo {nome_arquivo}")
+            file.write(str(encomenda))
+        print(f"Rastro da encomenda {encomenda.id_enc} salvo no arquivo {nome_arquivo}")

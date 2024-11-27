@@ -15,12 +15,12 @@ class GerenciadorVeiculos:
     def gerenciar_veiculo(self, id_veiculo):
         while not self.sistema.finalizado:
             posicao_atual = self.sistema.veiculos_pos[id_veiculo]
-            time.sleep(random.uniform(0.5, 1.5))
+            time.sleep(random.uniform(0.5, 10))
 
             proximo_ponto = (posicao_atual + 1) % self.sistema.s            
 
             self.sistema.gerenciar_ponto(
-                proximo_ponto, id_veiculo, posicao_atual)
+                proximo_ponto, id_veiculo)
 
             self.sistema.update_queue.put(
                 ("Movimento", (id_veiculo, proximo_ponto)))
