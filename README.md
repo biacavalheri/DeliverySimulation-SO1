@@ -1,33 +1,61 @@
 # DeliverySimulation-SO1
-Este projeto simula o comportamento de uma rede de entregas, onde encomendas são transportadas por veículos de pontos de redistribuição até seus destinos. A aplicação foi desenvolvida em Python utilizando conceitos de programação concorrente com threads, semáforos e variáveis de controle.
+
+Este projeto simula o comportamento de uma rede de entregas onde veículos transportam encomendas de pontos de redistribuição até seus destinos. A aplicação foi desenvolvida em Python utilizando conceitos de programação concorrente, como threads, semáforos e variáveis de controle.
 
 ## Funcionalidades
+
 - Simulação de **S** pontos de redistribuição.
-- **C** veículos que transportam encomendas.
+- **C** veículos responsáveis pelo transporte das encomendas.
 - **P** encomendas a serem entregues.
 - Cada veículo possui **A** espaços de carga para acomodar as encomendas.
 
 ## Como Funciona
 
 ### Pontos de Redistribuição:
-- Cada ponto é responsável por gerenciar uma fila de encomendas que aguardam para ser despachadas.
-- O acesso a cada ponto é sincronizado utilizando um `Lock`, garantindo que apenas um veículo seja atendido por vez.
-
+- Cada ponto de redistribuição é responsável por gerenciar uma fila de encomendas que aguardam para serem despachadas.
+- O acesso a cada ponto é sincronizado utilizando um `semáforo`, garantindo que apenas um veículo seja atendido por vez.
+  
 ### Veículos:
-- Os veículos são representados por threads que circulam entre os pontos de redistribuição.
-- Cada veículo tenta despachar encomendas de um ponto atual, e, se não houver encomendas disponíveis, move-se para o próximo ponto.
-- O tempo de viagem entre pontos é aleatório, simulando a variabilidade nas entregas.
+- Os veículos são representados como threads que circulam entre os pontos de redistribuição.
+- Cada veículo tenta despachar encomendas do ponto em que está. Caso não haja encomendas disponíveis, o veículo se move para o próximo ponto.
+- O tempo de viagem entre os pontos é aleatório, simulando a variabilidade nas entregas.
 
 ### Encomendas:
-- As encomendas também são tratadas como threads que gerenciam seu ciclo de vida, desde a chegada em um ponto até a entrega no destino.
-- Ao chegar ao ponto de origem, a encomenda é adicionada à fila do ponto e espera para ser carregada por um veículo.
-- O rastro de cada encomenda é salvo em um arquivo, registrando horários de chegada, carregamento e descarregamento.
+- As encomendas são tratadas como threads, gerenciando seu ciclo de vida, desde a chegada ao ponto de origem até a entrega no destino.
+- Ao chegar a um ponto de origem, a encomenda é colocada na fila de espera do ponto e aguarda para ser carregada por um veículo.
+- O rastro de cada encomenda é registrado em um arquivo, contendo horários de chegada, carregamento e descarregamento.
 
 ## Dependências
 - Python 3.x
 
 ## Estrutura do Código
-- **PontoRedistribuicao**: Classe que representa um ponto de redistribuição, gerencia a fila de encomendas.
-- **Veiculo**: Classe que representa um veículo, é responsável por carregar e entregar encomendas.
-- **Encomenda**: Classe que representa uma encomenda, gerencia seu ciclo de vida e grava seu rastro.
-- **main()**: Função principal que inicializa os pontos, veículos e encomendas, gerenciando sua execução.
+
+A estrutura do código é organizada em classes que representam os diferentes elementos da simulação. Cada classe tem responsabilidades específicas, de forma que a simulação seja executada de maneira eficiente.
+
+- **PontoRedistribuicao**:  
+  Classe que representa um ponto de redistribuição. Cada ponto é responsável por gerenciar uma fila de encomendas que aguardam para serem despachadas. O ponto utiliza um **semáforo** para controlar o número de veículos que podem ser atendidos simultaneamente.  
+  Responsabilidades:
+  - Gerenciar a fila de encomendas.
+  - Controlar o acesso ao ponto de redistribuição através de semáforo.
+
+- **Veiculo**:  
+  Classe que representa um veículo na simulação. Cada veículo é responsável por transportar encomendas de um ponto de redistribuição até o seu destino. Os veículos são representados por **threads**, permitindo que eles operem de forma concorrente, visitando vários pontos e realizando entregas.  
+  Responsabilidades:
+  - Transportar encomendas entre pontos de redistribuição.
+  - Despachar e carregar encomendas em pontos de redistribuição.
+  - Garantir a movimentação entre pontos com intervalos de tempo simulados aleatoriamente.
+
+- **Encomenda**:  
+  Classe que representa uma encomenda na simulação. Cada encomenda é tratada como uma thread, com seu ciclo de vida registrado desde o momento em que chega a um ponto de redistribuição até a entrega final.  
+  Responsabilidades:
+  - Gerenciar o ciclo de vida da encomenda, desde a chegada até a entrega.
+  - Registrar os horários de chegada, carregamento e descarregamento da encomenda em um arquivo de rastreamento.
+
+- **main()**:  
+  Função principal do programa. Ela inicializa os pontos de redistribuição, veículos e encomendas, gerenciando a execução da simulação. A função também coordena a criação e execução das threads, controlando o andamento da entrega das encomendas.  
+  Responsabilidades:
+  - Inicializar os pontos de redistribuição, veículos e encomendas.
+  - Iniciar a execução das threads.
+  - Gerenciar o ciclo completo da simulação, controlando o tempo de execução e o rastreamento das encomendas.
+
+Cada componente da simulação é independente, mas trabalha em conjunto para criar uma rede de entregas eficiente e realista, utilizando conceitos de concorrência para simular o transporte e a entrega das encomendas.
