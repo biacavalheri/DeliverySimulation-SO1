@@ -1,6 +1,8 @@
 import random
 import time
 
+spacing= 130
+padding_left= 25
 
 class GerenciadorVeiculos:
     def __init__(self, sistema):
@@ -28,9 +30,8 @@ class GerenciadorVeiculos:
             intervalos = 20  # Número de passos da viagem
             tempo_por_intervalo = tempo_total_viagem / intervalos
 
-            spacing = 800 // self.sistema.s
-            x_inicio = spacing * posicao_atual + spacing // 2
-            x_fim = spacing * proximo_ponto + spacing // 2
+            x_inicio = padding_left + spacing * posicao_atual + spacing // 2
+            x_fim = padding_left + spacing * proximo_ponto + spacing // 2
             y = 150  # Mantém o eixo Y fixo
 
             for i in range(1, intervalos + 1):
