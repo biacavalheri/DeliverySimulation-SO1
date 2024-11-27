@@ -1,5 +1,5 @@
 import tkinter as tk
-
+from queue import Queue
 
 class Interface:
     def __init__(self, sistema):
@@ -27,7 +27,7 @@ class Interface:
         spacing = 800 // self.sistema.s
         for i in range(self.sistema.s):
             x = spacing * i + spacing // 2
-            y = 200
+            y = 120  # Posição dos pontos ajustada para ficarem mais acima
             ponto = self.canvas.create_oval(
                 x - 20, y - 20, x + 20, y + 20, fill="blue")
             label = self.canvas.create_text(x, y - 30, text=f"Ponto {i}")
@@ -36,7 +36,7 @@ class Interface:
         # Criar veículos e adicionar números ao lado
         for i in range(self.sistema.c):
             x = spacing * self.sistema.veiculos_pos[i] + spacing // 2
-            y = 150
+            y = 200 + (i * 20)  # Posição inicial dos veículos ajustada para ficarem mais acima
             veiculo = self.canvas.create_rectangle(
                 x - 10, y - 10, x + 10, y + 10, fill="red")
             veiculo_label = self.canvas.create_text(
@@ -51,7 +51,7 @@ class Interface:
             if event_type == "Movimento Parcial":
                 id_veiculo = data["id_veiculo"]
                 x = data["x"]
-                y = data["y"]
+                y = 200 + (id_veiculo * 20)  # Ajusta a posição vertical mais acima
 
                 # Atualiza a posição parcial do veículo
                 self.canvas.coords(
@@ -64,7 +64,7 @@ class Interface:
                 veiculo_id, posicao = data
                 spacing = 800 // self.sistema.s
                 x = spacing * posicao + spacing // 2
-                y = 150
+                y = 200 + (veiculo_id * 20)  # Ajusta a posição vertical mais acima
                 # Atualiza a posição final do veículo
                 self.canvas.coords(
                     self.veiculos_ui[veiculo_id], x - 10, y - 10, x + 10, y + 10
@@ -81,6 +81,7 @@ class Interface:
                 veiculo_id = data["id_veiculo"]
                 status = data["status"]
                 posicao = self.sistema.veiculos_status[veiculo_id]["posicao"]
+                y = 200 + (veiculo_id * 20)  # Ajusta a posição vertical mais acima
                 self.canvas.itemconfig(
                     self.veiculos_labels[veiculo_id],
                     text=f"V{veiculo_id} (Pos: {posicao}, Status: {status})"
@@ -103,7 +104,6 @@ class Interface:
                 self.log_text.yview(tk.END)
 
         self.root.after(100, self.update_interface)
-
 
     def start(self):
         self.root.mainloop()
